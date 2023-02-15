@@ -850,7 +850,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         for (Map.Entry param: paramMap.entrySet()) {
             queryString.append(param.getKey()).append("=")
                     .append(URLEncoder.encode(param.getValue().toString(), StandardCharsets.UTF_8.toString())
-                            .replace("+", "%20"))
+                            .replace("+", "%20").replace("%2C", "%20"))
                     .append("&");
         }
 
