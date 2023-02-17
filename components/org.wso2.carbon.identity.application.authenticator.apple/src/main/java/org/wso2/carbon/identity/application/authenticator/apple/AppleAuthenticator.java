@@ -16,7 +16,6 @@
  * under the License.
  */
 
-// TODO: Add additional query params if scope set.
 package org.wso2.carbon.identity.application.authenticator.apple;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
