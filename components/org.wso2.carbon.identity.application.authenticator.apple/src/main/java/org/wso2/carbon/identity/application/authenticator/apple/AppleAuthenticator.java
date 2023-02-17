@@ -120,6 +120,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 String scopes = getScope(authenticatorProperties);
                 String queryString = getQueryString(authenticatorProperties);
 
+                // If scopes are present, Apple requires sending response_mode as form_post.
                 if (StringUtils.isNotBlank(scopes)) {
                     queryString += "&scope=" + scopes + "&" +
                             AppleAuthenticatorConstants.APPLE_DEFAULT_QUERY_PARAMS_FOR_SCOPE;
