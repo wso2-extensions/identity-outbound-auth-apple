@@ -16,6 +16,7 @@
  * under the License.
  */
 
+// TODO: Add additional query params if scope set.
 package org.wso2.carbon.identity.application.authenticator.apple;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
@@ -120,7 +121,8 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 String queryString = getQueryString(authenticatorProperties);
 
                 if (StringUtils.isNotBlank(scopes)) {
-                    queryString += "&scope=" + scopes;
+                    queryString += "&scope=" + scopes + "&" +
+                            AppleAuthenticatorConstants.APPLE_DEFAULT_QUERY_PARAMS_FOR_SCOPE;
                 }
                 queryString = interpretQueryString(context, queryString, request.getParameterMap());
                 Map<String, String> paramValueMap = new HashMap<>();
@@ -405,7 +407,6 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         Property additionalQueryParams = new Property();
         additionalQueryParams.setName(AppleAuthenticatorConstants.ADDITIONAL_QUERY_PARAMETERS);
         additionalQueryParams.setDisplayName("Additional Query Parameters");
-        additionalQueryParams.setValue("response_mode=form_post");
         additionalQueryParams.setDescription("Additional query parameters to be sent to Apple.");
         additionalQueryParams.setDisplayOrder(9);
         configProperties.add(additionalQueryParams);

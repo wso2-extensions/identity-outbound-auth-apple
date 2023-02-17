@@ -42,6 +42,8 @@ public class AppleAuthenticatorConstants {
     public static final String CLIENT_SECRET_JWT_AUDIENCE = "https://appleid.apple.com";
     public static final long CLIENT_SECRET_VALIDITY_PERIOD_THRESHOLD = 3600;
     public static final long CLIENT_SECRET_VALIDITY_PERIOD_DEFAULT = 15777000;
+    public static final String APPLE_DEFAULT_QUERY_PARAMS_FOR_SCOPE = "response_mode=form_post";
+
     public static final String APPLE_AUTHZ_ENDPOINT = "AppleAuthzEndpoint";
     public static final String APPLE_TOKEN_ENDPOINT = "AppleTokenEndpoint";
     public static final String APPLE_USER_INFO_KEY = "user";
