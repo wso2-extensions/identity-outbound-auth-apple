@@ -85,6 +85,11 @@
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.orbit.commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${commons-collections.version}</version>
+            </dependency>
 
             <!-- framework dependencies -->
             <dependency>
@@ -107,6 +112,11 @@
                 <artifactId>org.wso2.carbon.idp.mgt</artifactId>
                 <version>${carbon.identity.framework.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+                <version>${carbon.identity.framework.version}</version>
+            </dependency>
 
             <!-- other wso2 dependencies -->
             <dependency>
@@ -117,7 +127,12 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth.common</artifactId>
-                <version>${carbon.identity.oauth.common.version}</version>
+                <version>${carbon.identity.oauth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+                <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+                <version>${carbon.identity.oauth.version}</version>
             </dependency>
 
             <!-- other dependencies -->
@@ -290,8 +305,8 @@
         <!-- other wso2 dependencies -->
         <identity.outbound.auth.oidc.version>5.11.2</identity.outbound.auth.oidc.version>
         <carbon.identity.outbound.oidc.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.outbound.oidc.package.import.version.range>
-        <carbon.identity.oauth.common.version>6.2.0</carbon.identity.oauth.common.version>
-        <carbon.identity.oauth.common.package.import.version.range>[6.2.0, 7.0.0)</carbon.identity.oauth.common.package.import.version.range>
+        <carbon.identity.oauth.version>6.2.0</carbon.identity.oauth.version>
+        <carbon.identity.oauth.package.import.version.range>[6.2.0, 7.0.0)</carbon.identity.oauth.package.import.version.range>
 
         <!-- other dependencies -->
         <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
@@ -300,6 +315,8 @@
         <commons-logging.osgi.version.range>[1.2.0, 2.0.0)</commons-logging.osgi.version.range>
         <commons-codec.version>1.14.0.wso2v1</commons-codec.version>
         <commons-codec.wso2.osgi.version.range>[1.4.0, 2.0.0)</commons-codec.wso2.osgi.version.range>
+        <commons-collections.version>3.2.2.wso2v1</commons-collections.version>
+        <commons-collections.wso2.osgi.version.range>[3.0.0, 4.0.0)</commons-collections.wso2.osgi.version.range>
         <oltu.oauth2.version>1.0.0</oltu.oauth2.version>
         <oltu.oauth2.version.range>[1.0.0, 1.0.3)</oltu.oauth2.version.range>
         <nimbusds.version>7.3.0.wso2v1</nimbusds.version>

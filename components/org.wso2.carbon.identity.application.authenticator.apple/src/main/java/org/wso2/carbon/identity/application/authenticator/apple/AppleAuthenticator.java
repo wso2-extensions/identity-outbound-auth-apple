@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.application.authenticator.apple;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -48,6 +49,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
@@ -107,7 +109,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
 
         try {
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
-            if (authenticatorProperties != null) {
+            if (MapUtils.isNotEmpty(authenticatorProperties)) {
                 evaluateClientSecret(context, authenticatorProperties);
 
                 String clientId = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID);
@@ -115,7 +117,6 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 String callbackUrl = getCallbackUrl(authenticatorProperties);
                 String state = getStateParameter(context, authenticatorProperties);
                 String scopes = getScope(authenticatorProperties);
-                OAuthClientRequest authzRequest;
                 String queryString = getQueryString(authenticatorProperties);
 
                 if (StringUtils.isNotBlank(scopes)) {
@@ -126,7 +127,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
 
                 if (StringUtils.isNotBlank(queryString)) {
                     String[] params = queryString.split("&");
-                    for (String param: params) {
+                    for (String param : params) {
                         String[] intParam = param.split("=");
                         if (intParam.length >= 2) {
                             paramValueMap.put(intParam[0], intParam[1]);
@@ -134,36 +135,25 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                     }
                     context.setProperty(OIDCAuthenticatorConstants.OIDC_QUERY_PARAM_MAP_PROPERTY_KEY, paramValueMap);
                 }
-                queryString = getEvaluatedQueryString(paramValueMap);
 
+                queryString = getEvaluatedQueryString(paramValueMap);
                 String scope = paramValueMap.get(OAuthConstants.OAuth20Params.SCOPE);
                 scope = getScope(scope, authenticatorProperties);
+                OAuthClientRequest.AuthenticationRequestBuilder requestBuilder =
+                        OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
+                                .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
+                                .setState(state);
 
-                if (StringUtils.isNotBlank(queryString)
-                        && queryString.toLowerCase(Locale.getDefault()).contains("scope=")
-                        && queryString.toLowerCase(Locale.getDefault()).contains("redirect_uri=")) {
-                    authzRequest = OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
-                            .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE).setState(state)
-                            .buildQueryMessage();
-                } else if (StringUtils.isNotBlank(queryString)
-                        && queryString.toLowerCase(Locale.getDefault()).contains("scope=")) {
-                    authzRequest = OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
-                            .setRedirectURI(callbackUrl)
-                            .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE).setState(state)
-                            .buildQueryMessage();
-                } else if (StringUtils.isNotBlank(queryString) && queryString.toLowerCase(Locale.getDefault())
-                        .contains("redirect_uri=")) {
-                    authzRequest = OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
-                            .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
-                            .setScope(OIDCAuthenticatorConstants.OAUTH_OIDC_SCOPE).setState(state).buildQueryMessage();
-                } else {
-                    authzRequest = OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
-                            .setRedirectURI(callbackUrl)
-                            .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE).setScope(scope)
-                            .setState(state).buildQueryMessage();
+                if (StringUtils.isBlank(queryString) ||
+                        !queryString.toLowerCase(Locale.getDefault()).contains("scope=")) {
+                    requestBuilder.setScope(scope);
+                }
+                if (StringUtils.isBlank(queryString) ||
+                        !queryString.toLowerCase(Locale.getDefault()).contains("redirect_uri=")) {
+                    requestBuilder.setRedirectURI(callbackUrl);
                 }
 
-                String loginPage = authzRequest.getLocationUri();
+                String loginPage = requestBuilder.buildQueryMessage().getLocationUri();
                 String domain = request.getParameter("domain");
 
                 if (StringUtils.isNotBlank(domain)) {
@@ -186,20 +176,13 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         OIDCErrorConstants.ErrorMessages.RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED.getCode(),
                         OIDCErrorConstants.ErrorMessages.RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED.getMessage());
             }
-        } catch (UnsupportedEncodingException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Error while encoding the additional query parameters.", e);
-            }
+        } catch (UnsupportedEncodingException | OAuthSystemException e) {
             throw new AuthenticationFailedException(
                     OIDCErrorConstants.ErrorMessages.BUILDING_AUTHORIZATION_CODE_REQUEST_FAILED.getCode(),
                     e.getMessage(), e);
         } catch (IOException e) {
             throw new AuthenticationFailedException(
                     OIDCErrorConstants.ErrorMessages.IO_ERROR.getCode(), e.getMessage(), e);
-        } catch (OAuthSystemException e) {
-            throw new AuthenticationFailedException(
-                    OIDCErrorConstants.ErrorMessages.BUILDING_AUTHORIZATION_CODE_REQUEST_FAILED.getCode(),
-                    e.getMessage(), e);
         }
     }
 
@@ -285,10 +268,19 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 context.setProperty(FEDERATED_IDP_SESSION_ID + idpName, sidClaim);
             }
 
-            // TODO: Do we need to sanitize PII here? Or do we really need to log this?
-            if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(
-                    IdentityConstants.IdentityTokens.USER_ID_TOKEN)) {
-                log.debug("Retrieved the User Information: " + jwtAttributeMap);
+            if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.USER_ID_TOKEN)) {
+                if (LoggerUtils.isLogMaskingEnable) {
+                    Map<String, Object> maskedAttributeMap = new HashMap<>();
+                    for (Map.Entry<String, Object> entry : jwtAttributeMap.entrySet()) {
+                        if (entry.getValue() instanceof String) {
+                            maskedAttributeMap.put(entry.getKey(),
+                                    LoggerUtils.getMaskedContent((String) entry.getValue()));
+                        }
+                    }
+                    log.debug("Retrieved the User Information: " + maskedAttributeMap);
+                } else {
+                    log.debug("Retrieved the User Information: " + jwtAttributeMap);
+                }
             }
 
             String authenticatedUserId = getAuthenticatedUserId(context, oAuthResponse, jwtAttributeMap);
@@ -483,7 +475,6 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         if (StringUtils.isBlank(scope)) {
             return StringUtils.EMPTY;
         }
-
         return scope;
     }
 
@@ -610,13 +601,11 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         authenticatorProperties.get(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET)) ||
                 expiryEpochTime <= currentEpochTime
         ) {
-            if (log.isDebugEnabled()) {
-                String msg = String.format("Generating client secret since it is null or invalidated. " +
-                        "Tenant: %s, Secret re-gen property: %s, Current time: %s, Expiry time: %s.", tenantDomain,
-                        authenticatorProperties.get(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET),
-                        currentEpochTime, expiryEpochTime);
-                log.debug(msg);
-            }
+            String msg = String.format("Generating Apple client secret since it is null or invalidated. " +
+                    "Tenant: %s, Secret re-gen property: %s, Current time: %s, Expiry time: %s.", tenantDomain,
+                    authenticatorProperties.get(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET),
+                    currentEpochTime, expiryEpochTime);
+            log.info(msg);
 
             // Check for pre-conditions.
             if (StringUtils.isBlank(authenticatorProperties.get(AppleAuthenticatorConstants.PRIVATE_KEY))
@@ -659,15 +648,20 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                             AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME)) {
                         Property[] idpProperties = federatedAuthenticator.getProperties();
                         for (Property idpProperty : idpProperties) {
-                            if (StringUtils.equals(idpProperty.getName(), OIDCAuthenticatorConstants.CLIENT_SECRET)) {
-                                idpProperty.setValue(AppleUtil.generateClientSecret(
-                                        context.getAuthenticatorProperties(), currentEpochTime, newExpiryEpochTime));
-                            } else if (StringUtils.equals(idpProperty.getName(),
-                                    AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA)) {
-                                idpProperty.setValue(String.valueOf(newExpiryEpochTime));
-                            } else if (StringUtils.equals(idpProperty.getName(),
-                                    AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET)) {
-                                idpProperty.setValue("false");
+                            switch (idpProperty.getName()) {
+                                case OIDCAuthenticatorConstants.CLIENT_SECRET:
+                                    idpProperty.setValue(AppleUtil.generateClientSecret(
+                                            context.getAuthenticatorProperties(), currentEpochTime,
+                                            newExpiryEpochTime));
+                                    break;
+                                case AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA:
+                                    idpProperty.setValue(String.valueOf(newExpiryEpochTime));
+                                    break;
+                                case AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET:
+                                    idpProperty.setValue("false");
+                                    break;
+                                default:
+                                    break;
                             }
                         }
                         break;
@@ -847,7 +841,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         if (paramMap.isEmpty()) {
             return queryString.toString();
         }
-        for (Map.Entry param: paramMap.entrySet()) {
+        for (Map.Entry param : paramMap.entrySet()) {
             queryString.append(param.getKey()).append("=")
                     .append(URLEncoder.encode(param.getValue().toString(), StandardCharsets.UTF_8.toString())
                             .replace("+", "%20").replace("%2C", "%20"))

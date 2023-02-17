@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.apple.AppleErrorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -64,11 +65,11 @@ public class AppleUtil {
                 .build();
 
         JWTClaimsSet jwtClaims = new JWTClaimsSet.Builder()
-                .claim("iss", authenticatorProperties.get(AppleAuthenticatorConstants.TEAM_ID))
-                .claim("iat", currentEpochTime)
-                .claim("exp", expiryEpochTime)
-                .claim("aud", AppleAuthenticatorConstants.CLIENT_SECRET_JWT_AUDIENCE)
-                .claim("sub", authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID))
+                .claim(OAuth2Util.ISS, authenticatorProperties.get(AppleAuthenticatorConstants.TEAM_ID))
+                .claim(OAuth2Util.IAT, currentEpochTime)
+                .claim(OAuth2Util.EXP, expiryEpochTime)
+                .claim(OAuth2Util.AUD, AppleAuthenticatorConstants.CLIENT_SECRET_JWT_AUDIENCE)
+                .claim(OAuth2Util.SUB, authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID))
                 .build();
 
         JWSObject jwsObject = new JWSObject(jwtHeader, new Payload(jwtClaims.toJSONObject()));

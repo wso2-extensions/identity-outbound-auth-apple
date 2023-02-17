@@ -58,6 +58,10 @@
             <groupId>org.wso2.orbit.commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+        </dependency>
 
         <!-- framework dependencies -->
         <dependency>
@@ -76,6 +80,10 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.idp.mgt</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+        </dependency>
 
         <!-- other wso2 dependencies -->
         <dependency>
@@ -85,6 +93,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
             <artifactId>org.wso2.carbon.identity.oauth.common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+            <artifactId>org.wso2.carbon.identity.oauth</artifactId>
         </dependency>
 
         <!-- other dependencies -->
@@ -150,24 +162,42 @@
                             org.apache.commons.lang; version="${org.apache.commons.lang.version.range}",
                             org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
                             org.apache.commons.codec.binary; version="${commons-codec.wso2.osgi.version.range}",
+                            org.apache.commons.collections; version="${commons-collections.wso2.osgi.version.range}",
 
-                            org.wso2.carbon.identity.application.authentication.framework; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.context; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.exception; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.config.model; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.config.builder; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.model; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.common.model; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.application.common.util; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.context;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.builder;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.util;
+                            version="${identity.framework.package.import.version.range}",
                             org.wso2.carbon.identity.core; version="${identity.framework.package.import.version.range}",
-                            org.wso2.carbon.identity.core.util; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util;
+                            version="${identity.framework.package.import.version.range}",
                             org.wso2.carbon.identity.base; version="${identity.framework.package.import.version.range}",
                             org.wso2.carbon.idp.mgt; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.central.log.mgt.*;
+                            version="${identity.framework.package.import.version.range}",
 
-                            org.wso2.carbon.identity.application.authenticator.oidc; version="${carbon.identity.outbound.oidc.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc.model; version="${carbon.identity.outbound.oidc.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc.util; version="${carbon.identity.outbound.oidc.package.import.version.range}",
-                            org.wso2.carbon.identity.oauth.common; version="${carbon.identity.oauth.common.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc.model;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc.util;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth.common;
+                            version="${carbon.identity.oauth.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth2.util;
+                            version="${carbon.identity.oauth.package.import.version.range}",
 
                             org.apache.oltu.oauth2.client.request; version="${oltu.oauth2.version.range}",
                             org.apache.oltu.oauth2.client.response; version="${oltu.oauth2.version.range}",
