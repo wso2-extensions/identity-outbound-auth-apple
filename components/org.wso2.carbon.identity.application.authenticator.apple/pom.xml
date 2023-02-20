@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023, WSO2 LLC. (https://www.wso2.com).
+  ~
+  ~ WSO2 LLC. licenses this file to you under the Apache License,
+  ~ Version 2.0 (the "License"); you may not use this file except
+  ~ in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+  ~
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>org.wso2.carbon.identity.outbound.auth.apple</groupId>
+        <artifactId>identity-outbound-auth-apple</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>org.wso2.carbon.identity.application.authenticator.apple</artifactId>
+    <packaging>bundle</packaging>
+    <name>WSO2 Carbon - Apple Authenticator</name>
+
+    <dependencies>
+        <!-- kernel dependencies -->
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.user.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.base</artifactId>
+        </dependency>
+
+        <!-- commons library dependencies -->
+        <dependency>
+            <groupId>commons-lang.wso2</groupId>
+            <artifactId>commons-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+        </dependency>
+
+        <!-- framework dependencies -->
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.idp.mgt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
+        </dependency>
+
+        <!-- other wso2 dependencies -->
+        <dependency>
+            <groupId>org.wso2.carbon.identity.outbound.auth.oidc</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authenticator.oidc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+            <artifactId>org.wso2.carbon.identity.oauth.common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+            <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+        </dependency>
+
+        <!-- other dependencies -->
+        <dependency>
+            <groupId>org.wso2.orbit.org.apache.oltu.oauth2</groupId>
+            <artifactId>oltu</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.json.wso2</groupId>
+            <artifactId>json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-scr-scrdescriptor</id>
+                        <goals>
+                            <goal>scr</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${project.artifactId}</Bundle-Name>
+                        <private-package>org.wso2.carbon.identity.application.authenticator.apple.internal</private-package>
+                        <Export-Package>
+                            !org.wso2.carbon.identity.application.authenticator.apple.internal,
+                            org.wso2.carbon.identity.application.authenticator.apple.*
+                        </Export-Package>
+                        <Import-Package>
+                            org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
+                            org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
+
+                            org.wso2.carbon.user.core; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.service; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.core.tenant; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.user.api; version="${carbon.user.api.imp.pkg.version.range}",
+                            org.wso2.carbon.base; version="${carbon.base.imp.pkg.version.range}",
+
+                            org.apache.commons.lang; version="${org.apache.commons.lang.version.range}",
+                            org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
+                            org.apache.commons.codec.binary; version="${commons-codec.wso2.osgi.version.range}",
+                            org.apache.commons.collections; version="${commons-collections.wso2.osgi.version.range}",
+
+                            org.wso2.carbon.identity.application.authentication.framework;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.context;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.exception;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.config.builder;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.util;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.core; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.base; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt; version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.central.log.mgt.*;
+                            version="${identity.framework.package.import.version.range}",
+
+                            org.wso2.carbon.identity.application.authenticator.oidc;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc.model;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authenticator.oidc.util;
+                            version="${carbon.identity.outbound.oidc.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth.common;
+                            version="${carbon.identity.oauth.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth2.util;
+                            version="${carbon.identity.oauth.package.import.version.range}",
+
+                            org.apache.oltu.oauth2.client.request; version="${oltu.oauth2.version.range}",
+                            org.apache.oltu.oauth2.client.response; version="${oltu.oauth2.version.range}",
+                            org.apache.oltu.oauth2.common.exception; version="${oltu.oauth2.version.range}",
+                            org.apache.oltu.oauth2.common.utils; version="${oltu.oauth2.version.range}",
+                            javax.servlet.http; version="${imp.pkg.version.javax.servlet}",
+                            com.nimbusds.jose; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jose.util; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jose.crypto; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jose.jwk; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jwt; version="${nimbusds.osgi.version.range}",
+                            org.json; version="${json.wso2.version.range}",
+                            net.minidev.json; version="${net.minidev.json.imp.pkg.version.range}",
+                            org.owasp.encoder; version="${encoder.wso2.imp.pkg.version.range}",
+                        </Import-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
