@@ -78,10 +78,6 @@
                             <propertiesFile>../etc/feature.properties</propertiesFile>
                             <bundles>
                                 <bundleDef>org.wso2.carbon.identity.outbound.auth.apple:org.wso2.carbon.identity.application.authenticator.apple</bundleDef>
-                                <bundleDef>org.wso2.orbit.org.apache.oltu.oauth2:oltu</bundleDef>
-                                <bundleDef>org.wso2.orbit.com.nimbusds:nimbus-jose-jwt</bundleDef>
-                                <bundleDef>org.json.wso2:json</bundleDef>
-                                <bundleDef>org.wso2.orbit.org.owasp.encoder:encoder</bundleDef>
                             </bundles>
                             <importFeatures>
                                 <importFeatureDef>org.wso2.carbon.core:compatible:${carbon.kernel.version}</importFeatureDef>
