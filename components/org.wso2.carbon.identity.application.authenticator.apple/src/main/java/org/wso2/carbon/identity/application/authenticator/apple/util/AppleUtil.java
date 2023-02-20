@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.authenticator.apple.AppleErrorConsta
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -101,7 +102,7 @@ public class AppleUtil {
         // Prepare the key string by removing begin and end statements.
         keyString = keyString.replace("-----BEGIN PRIVATE KEY-----", "");
         keyString = keyString.replace("-----END PRIVATE KEY-----", "");
-        byte[] bytes = Base64.decodeBase64(keyString);
+        byte[] bytes = Base64.decodeBase64(keyString.getBytes(StandardCharsets.UTF_8));
 
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("EC");

@@ -35,6 +35,7 @@
 
     <modules>
         <module>components/org.wso2.carbon.identity.application.authenticator.apple</module>
+        <module>features/org.wso2.carbon.identity.application.authenticator.apple.server.feature</module>
     </modules>
 
     <dependencyManagement>
@@ -137,13 +138,8 @@
 
             <!-- other dependencies -->
             <dependency>
-                <groupId>org.apache.oltu.oauth2</groupId>
-                <artifactId>org.apache.oltu.oauth2.client</artifactId>
-                <version>${oltu.oauth2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.oltu.oauth2</groupId>
-                <artifactId>org.apache.oltu.oauth2.common</artifactId>
+                <groupId>org.wso2.orbit.org.apache.oltu.oauth2</groupId>
+                <artifactId>oltu</artifactId>
                 <version>${oltu.oauth2.version}</version>
             </dependency>
             <dependency>
@@ -286,9 +282,6 @@
 
     <properties>
         <!-- osgi dependencies -->
-        <maven.scr.plugin.version>1.24.0</maven.scr.plugin.version>
-        <maven.bundle.plugin.version>2.4.0</maven.bundle.plugin.version>
-        <apache.felix.scr.ds.annotations.version>1.2.8</apache.felix.scr.ds.annotations.version>
         <equinox.osgi.services.version>3.3.100.v20130513-1956</equinox.osgi.services.version>
         <eclipse.osgi.version>3.9.1.v20130814-1242</eclipse.osgi.version>
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
@@ -317,8 +310,8 @@
         <commons-codec.wso2.osgi.version.range>[1.4.0, 2.0.0)</commons-codec.wso2.osgi.version.range>
         <commons-collections.version>3.2.2.wso2v1</commons-collections.version>
         <commons-collections.wso2.osgi.version.range>[3.0.0, 4.0.0)</commons-collections.wso2.osgi.version.range>
-        <oltu.oauth2.version>1.0.0</oltu.oauth2.version>
-        <oltu.oauth2.version.range>[1.0.0, 1.0.3)</oltu.oauth2.version.range>
+        <oltu.oauth2.version>1.0.0.wso2v3</oltu.oauth2.version>
+        <oltu.oauth2.version.range>[1.0.0, 2.0.0)</oltu.oauth2.version.range>
         <nimbusds.version>7.3.0.wso2v1</nimbusds.version>
         <nimbusds.osgi.version.range>[7.3.0, 8.0.0)</nimbusds.osgi.version.range>
         <json.wso2.version>3.0.0.wso2v1</json.wso2.version>
@@ -328,7 +321,11 @@
         <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
         <net.minidev.json.imp.pkg.version.range>[2.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
 
-        <!-- code quality dependencies -->
+        <!-- maven plugin dependencies -->
+        <maven.scr.plugin.version>1.24.0</maven.scr.plugin.version>
+        <maven.bundle.plugin.version>2.4.0</maven.bundle.plugin.version>
+        <apache.felix.scr.ds.annotations.version>1.2.8</apache.felix.scr.ds.annotations.version>
+        <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
         <maven.checkstyleplugin.version>3.1.0</maven.checkstyleplugin.version>
         <maven.findbugsplugin.version>3.0.5</maven.findbugsplugin.version>
     </properties>
