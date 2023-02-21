@@ -26,6 +26,13 @@
         <version>1.4</version>
     </parent>
 
+    <scm>
+        <url>https://github.com/wso2-extensions/identity-outbound-auth-apple.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-apple.git</developerConnection>
+        <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-apple.git</connection>
+        <tag>HEAD</tag>
+    </scm>
+
     <groupId>org.wso2.carbon.identity.outbound.auth.apple</groupId>
     <artifactId>identity-outbound-auth-apple</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -257,6 +264,14 @@
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <preparationGoals>clean install</preparationGoals>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
