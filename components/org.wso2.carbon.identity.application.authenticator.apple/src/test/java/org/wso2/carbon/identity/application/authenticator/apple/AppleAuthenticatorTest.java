@@ -22,6 +22,7 @@ package org.wso2.carbon.identity.application.authenticator.apple;
 import org.apache.commons.lang.StringUtils;
 import org.apache.oltu.oauth2.client.response.OAuthClientResponse;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -74,6 +75,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * Unit tests for the Apple authenticator class.
@@ -85,8 +87,13 @@ public class AppleAuthenticatorTest {
     private static AuthenticatorConfig authenticatorConfig;
     private static AuthenticationContext authenticationContext;
 
+    private AutoCloseable autoCloseable;
+    @Mock
     private RealmService realmServiceMock;
+    @Mock
     private AppleAuthenticatorDataHolder appleAuthenticatorDataHolderMock;
+    @Mock
+    private FileBasedConfigurationBuilder fileBasedConfigurationBuilderMock;
     private MockedStatic<FileBasedConfigurationBuilder> fileBasedConfigurationBuilder;
     private MockedStatic<AppleAuthenticatorDataHolder> appleAuthenticatorDataHolder;
 
@@ -109,20 +116,18 @@ public class AppleAuthenticatorTest {
     @BeforeClass
     public void setup() {
 
-        appleAuthenticator = new AppleAuthenticatorMock();
+        appleAuthenticator = new AppleAuthenticatorTestWrapper();
+        autoCloseable = openMocks(this);
         authenticatorConfig = new AuthenticatorConfig();
         initAuthenticatorProperties();
         initAuthenticationContext();
 
         // Initialize mocks.
         fileBasedConfigurationBuilder = mockStatic(FileBasedConfigurationBuilder.class);
-        FileBasedConfigurationBuilder fileBasedConfigurationBuilderMock = mock(FileBasedConfigurationBuilder.class);
         when(FileBasedConfigurationBuilder.getInstance()).thenReturn(fileBasedConfigurationBuilderMock);
         when(fileBasedConfigurationBuilderMock.getAuthenticatorBean(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME))
                 .thenReturn(authenticatorConfig);
 
-        realmServiceMock = mock(RealmService.class);
-        appleAuthenticatorDataHolderMock = mock(AppleAuthenticatorDataHolder.class);
         appleAuthenticatorDataHolder = mockStatic(AppleAuthenticatorDataHolder.class);
         appleAuthenticatorDataHolder.when(AppleAuthenticatorDataHolder::getInstance).thenReturn(
                 appleAuthenticatorDataHolderMock);
@@ -130,10 +135,11 @@ public class AppleAuthenticatorTest {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
 
         fileBasedConfigurationBuilder.close();
         appleAuthenticatorDataHolder.close();
+        autoCloseable.close();
     }
 
     @DataProvider(name = "initiateAuthenticationRequestDataProvider")

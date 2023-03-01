@@ -30,13 +30,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Mock class for AppleAuthenticator.
+ * Wrapper class for AppleAuthenticator.
  *
  * Note:
  * AppleAuthenticator class extends the OIDCAuthenticator class which has some protected methods that
  * cannot be mocked for testing. Hence this class is created to mock those methods.
  */
-public class AppleAuthenticatorMock extends AppleAuthenticator {
+public class AppleAuthenticatorTestWrapper extends AppleAuthenticator {
 
     private OAuthClientResponse oAuthResponseMock;
 
