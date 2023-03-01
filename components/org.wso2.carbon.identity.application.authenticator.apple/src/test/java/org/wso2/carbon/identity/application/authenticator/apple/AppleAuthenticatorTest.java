@@ -19,6 +19,7 @@
 
 package org.wso2.carbon.identity.application.authenticator.apple;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.oltu.oauth2.client.response.OAuthClientResponse;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
@@ -48,6 +49,7 @@ import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdpManager;
+import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -66,6 +68,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -82,8 +85,8 @@ public class AppleAuthenticatorTest {
     private static AuthenticatorConfig authenticatorConfig;
     private static AuthenticationContext authenticationContext;
 
-    private IdpManager idpManagerMock;
     private RealmService realmServiceMock;
+    private AppleAuthenticatorDataHolder appleAuthenticatorDataHolderMock;
     private MockedStatic<FileBasedConfigurationBuilder> fileBasedConfigurationBuilder;
     private MockedStatic<AppleAuthenticatorDataHolder> appleAuthenticatorDataHolder;
 
@@ -107,24 +110,9 @@ public class AppleAuthenticatorTest {
     public void setup() {
 
         appleAuthenticator = new AppleAuthenticatorMock();
-
-        testAuthenticatorProperties = new HashMap<>();
-        testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, "testClientId");
-        testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_SECRET, "");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_VALIDITY_PERIOD, "7200");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "testTeamId");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.KEY_ID, "testKeyId");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.PRIVATE_KEY, "-----BEGIN PRIVATE KEY-----\n" +
-                "MIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgzFs/tGqHIchtAQyxZNNo\n" +
-                "Ml/8lB/FhBlUvIdAfLBF5/2hRANCAATV2pzqzrpi6PvE0u08cSEKtwv8jqTdEx1S\n" +
-                "rlf5IBbG+Y4Roo1zQ4s1ztL4j9kQmea6+TvYsRXDn2599Ea5dki/\n" +
-                "-----END PRIVATE KEY-----\n");
-        testAuthenticatorProperties.put(IdentityApplicationConstants.OAuth2.CALLBACK_URL,
-                "https://localhost:9443/commonauth");
-        testAuthenticatorProperties.put(IdentityApplicationConstants.Authenticator.OIDC.SCOPES, "name email");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.ADDITIONAL_QUERY_PARAMETERS, "");
-        testAuthenticatorProperties.put(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET, "false");
-        initAuthenticationData();
+        authenticatorConfig = new AuthenticatorConfig();
+        initAuthenticatorProperties();
+        initAuthenticationContext();
 
         // Initialize mocks.
         fileBasedConfigurationBuilder = mockStatic(FileBasedConfigurationBuilder.class);
@@ -133,13 +121,11 @@ public class AppleAuthenticatorTest {
         when(fileBasedConfigurationBuilderMock.getAuthenticatorBean(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME))
                 .thenReturn(authenticatorConfig);
 
-        idpManagerMock = mock(IdpManager.class);
         realmServiceMock = mock(RealmService.class);
-        AppleAuthenticatorDataHolder appleAuthenticatorDataHolderMock = mock(AppleAuthenticatorDataHolder.class);
+        appleAuthenticatorDataHolderMock = mock(AppleAuthenticatorDataHolder.class);
         appleAuthenticatorDataHolder = mockStatic(AppleAuthenticatorDataHolder.class);
         appleAuthenticatorDataHolder.when(AppleAuthenticatorDataHolder::getInstance).thenReturn(
                 appleAuthenticatorDataHolderMock);
-        when(appleAuthenticatorDataHolderMock.getIdpManager()).thenReturn(idpManagerMock);
         when(appleAuthenticatorDataHolderMock.getRealmService()).thenReturn(realmServiceMock);
     }
 
@@ -153,26 +139,25 @@ public class AppleAuthenticatorTest {
     @DataProvider(name = "initiateAuthenticationRequestDataProvider")
     public Object[][] initiateAuthenticationRequestDataProvider() {
 
-        // {secret_expired, required_fields_present, empty_authenticator_properties}
+        // {secret_regenerate_condition}.
         return new Object[][]{
-                {true, false, false},
-                {true, true, false},
-                {false, true, false},
-                {false, true, true}
+                {"NONE"},
+                {"EXPIRED_SECRET"},
+                {"EMPTY_SECRET"},
+                {"REGEN_PROPERTY"}
         };
     }
 
     @Test(dataProvider = "initiateAuthenticationRequestDataProvider")
-    public void testInitiateAuthenticationRequest(boolean secretExpired, boolean requiredFieldsPresent,
-                                                  boolean emptyAuthenticatorProperties) throws IOException {
+    public void testInitiateAuthenticationRequest(String secretGenerateCondition)
+            throws IOException, AuthenticationFailedException, IdentityProviderManagementException {
 
-        initAuthenticationData();
-        if (emptyAuthenticatorProperties) {
-            authenticationContext.setAuthenticatorProperties(Collections.emptyMap());
-        }
-
+        initAuthenticatorProperties();
+        initAuthenticationContext();
         HttpServletRequest httpServletRequestMock = mock(HttpServletRequest.class);
         HttpServletResponse httpServletResponseMock = mock(HttpServletResponse.class);
+        IdpManager idpManagerMock = mock(IdpManager.class);
+        when(appleAuthenticatorDataHolderMock.getIdpManager()).thenReturn(idpManagerMock);
 
         Map<String, String[]> requestParameters = new HashMap<>();
         requestParameters.put("idp", new String[]{"Apple"});
@@ -187,19 +172,23 @@ public class AppleAuthenticatorTest {
         when(httpServletResponseMock.encodeRedirectURL(anyString())).thenAnswer(
                 invocation -> invocation.getArgument(0));
 
-        if (secretExpired) {
-            testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA,
-                    Long.toString(Instant.now().getEpochSecond() - 7200));
-        } else {
-            testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA,
-                    Long.toString(Instant.now().getEpochSecond() + 7200));
-        }
-        if (!requiredFieldsPresent) {
-            testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, "");
-            testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "");
-        } else {
-            testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, "testClientId");
-            testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "testTeamId");
+        switch (secretGenerateCondition) {
+            case "NONE":
+                testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA,
+                        Long.toString(Instant.now().getEpochSecond() + 7200));
+                break;
+            case "EXPIRED_SECRET":
+                testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA,
+                        Long.toString(Instant.now().getEpochSecond() - 7200));
+                break;
+            case "EMPTY_SECRET":
+                testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_SECRET, "");
+                break;
+            case "REGEN_PROPERTY":
+                testAuthenticatorProperties.put(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET, "true");
+                break;
+            default:
+                break;
         }
 
         ArgumentCaptor<String> idpResourceIdCaptor = ArgumentCaptor.forClass(String.class);
@@ -207,49 +196,95 @@ public class AppleAuthenticatorTest {
         ArgumentCaptor<String> tenantDomainCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> servelettResponseCaptor = ArgumentCaptor.forClass(String.class);
 
+        appleAuthenticator.initiateAuthenticationRequest(httpServletRequestMock, httpServletResponseMock,
+                authenticationContext);
+
+        // Assert for identity provider update call when secret generation happens.
+        if (!StringUtils.equals(secretGenerateCondition, "NONE")) {
+            verify(idpManagerMock).updateIdPByResourceId(idpResourceIdCaptor.capture(),
+                    identityProviderCaptor.capture(), tenantDomainCaptor.capture());
+            Assert.assertEquals(idpResourceIdCaptor.getValue(), TEST_IDP_RESOURCE_ID);
+            Assert.assertEquals(identityProviderCaptor.getValue(), authenticationContext.getExternalIdP()
+                    .getIdentityProvider());
+            Assert.assertEquals(tenantDomainCaptor.getValue(), TEST_TENANT);
+        }
+
+        // Assert servlet redirect.
+        verify(httpServletResponseMock).sendRedirect(servelettResponseCaptor.capture());
+        String redirectUrl = servelettResponseCaptor.getValue();
+        Assert.assertTrue(redirectUrl.contains("https://appleid.apple.com/auth/authorize"));
+        Assert.assertTrue(redirectUrl.contains("response_type=code"));
+        Assert.assertTrue(redirectUrl.contains("client_id=testClientId"));
+        Assert.assertTrue(redirectUrl.contains("scope=name%20email"));
+        Assert.assertTrue(redirectUrl.contains("response_mode=form_post"));
+    }
+
+    @DataProvider(name = "initiateAuthenticationRequestExceptionDataProvider")
+    public Object[][] initiateAuthenticationRequestExceptionDataProvider() {
+
+        // {expected exception code}.
+        return new Object[][]{
+                {OIDCErrorConstants.ErrorMessages.RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED.getCode()},
+                {AppleErrorConstants.ErrorMessages.UNSUPPORTED_VALUE_PROVIDED_FOR_AUTHENTICATOR_PROPERTY.getCode()},
+                {AppleErrorConstants.ErrorMessages.REQUIRED_FIELDS_FOR_CLIENT_SECRET_NOT_FOUND.getCode()},
+                {AppleErrorConstants.ErrorMessages.NULL_IDP_IN_AUTHENTICATION_CONTEXT.getCode()},
+                {AppleErrorConstants.ErrorMessages.ERROR_WHILE_UPDATING_IDENTITY_PROVIDER.getCode()}
+        };
+    }
+
+    @Test(dataProvider = "initiateAuthenticationRequestExceptionDataProvider")
+    public void testInitiateAuthenticationRequestWithExceptions(String expectedExceptionCode)
+            throws IdentityProviderManagementException {
+
+        HttpServletRequest httpServletRequestMock = mock(HttpServletRequest.class);
+        HttpServletResponse httpServletResponseMock = mock(HttpServletResponse.class);
+
+        if (StringUtils.equals(expectedExceptionCode, OIDCErrorConstants.ErrorMessages
+                .RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED.getCode())) {
+            authenticationContext.setAuthenticatorProperties(Collections.emptyMap());
+        } else if (StringUtils.equals(expectedExceptionCode, AppleErrorConstants.ErrorMessages
+                .UNSUPPORTED_VALUE_PROVIDED_FOR_AUTHENTICATOR_PROPERTY.getCode())) {
+            testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA, "invalid");
+            authenticationContext = new AuthenticationContext();
+            authenticationContext.setAuthenticatorProperties(testAuthenticatorProperties);
+        } else if (StringUtils.equals(expectedExceptionCode, AppleErrorConstants.ErrorMessages
+                .REQUIRED_FIELDS_FOR_CLIENT_SECRET_NOT_FOUND.getCode())) {
+            testAuthenticatorProperties.remove(AppleAuthenticatorConstants.CLIENT_SECRET_EXPIRY_TIME_METADATA);
+            testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, "");
+            testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "");
+            authenticationContext = new AuthenticationContext();
+            authenticationContext.setAuthenticatorProperties(testAuthenticatorProperties);
+        } else if (StringUtils.equals(expectedExceptionCode, AppleErrorConstants.ErrorMessages
+                .NULL_IDP_IN_AUTHENTICATION_CONTEXT.getCode())) {
+            initAuthenticatorProperties();
+            initAuthenticationContext();
+            authenticationContext.setExternalIdP(null);
+        } else if (StringUtils.equals(expectedExceptionCode, AppleErrorConstants.ErrorMessages
+                .ERROR_WHILE_UPDATING_IDENTITY_PROVIDER.getCode())) {
+            IdpManager idpManagerMock = mock(IdpManager.class);
+            when(appleAuthenticatorDataHolderMock.getIdpManager()).thenReturn(idpManagerMock);
+            when(idpManagerMock.updateIdPByResourceId(anyString(), any(), anyString())).thenThrow(
+                    new IdentityProviderManagementException(IdPManagementConstants.ErrorMessage
+                            .ERROR_CODE_IDP_DOES_NOT_EXIST.getCode(), IdPManagementConstants.ErrorMessage
+                            .ERROR_CODE_IDP_DOES_NOT_EXIST.getMessage()));
+            initAuthenticatorProperties();
+            initAuthenticationContext();
+        }
+
         try {
             appleAuthenticator.initiateAuthenticationRequest(httpServletRequestMock, httpServletResponseMock,
                     authenticationContext);
-
-            if (secretExpired && requiredFieldsPresent) {
-                // Assert for identity provider update call.
-                verify(idpManagerMock).updateIdPByResourceId(idpResourceIdCaptor.capture(),
-                        identityProviderCaptor.capture(), tenantDomainCaptor.capture());
-                Assert.assertEquals(idpResourceIdCaptor.getValue(), TEST_IDP_RESOURCE_ID);
-                Assert.assertEquals(identityProviderCaptor.getValue(), authenticationContext.getExternalIdP()
-                        .getIdentityProvider());
-                Assert.assertEquals(tenantDomainCaptor.getValue(), TEST_TENANT);
-            }
-
-            // Assert servlet redirect.
-            verify(httpServletResponseMock).sendRedirect(servelettResponseCaptor.capture());
-            String redirectUrl = servelettResponseCaptor.getValue();
-            Assert.assertTrue(redirectUrl.contains("https://appleid.apple.com/auth/authorize"));
-            Assert.assertTrue(redirectUrl.contains("response_type=code"));
-            Assert.assertTrue(redirectUrl.contains("client_id=testClientId"));
-            Assert.assertTrue(redirectUrl.contains("scope=name%20email"));
-            Assert.assertTrue(redirectUrl.contains("response_mode=form_post"));
-            Assert.assertTrue(redirectUrl.contains("param1=value1"));
+            Assert.fail("Expected AuthenticationFailedException is not thrown.");
         } catch (AuthenticationFailedException e) {
-            if (secretExpired && !requiredFieldsPresent) {
-                Assert.assertEquals(e.getErrorCode(), AppleErrorConstants.ErrorMessages
-                        .REQUIRED_FIELDS_FOR_CLIENT_SECRET_NOT_FOUND.getCode());
-            } else if (emptyAuthenticatorProperties) {
-                Assert.assertEquals(e.getErrorCode(), OIDCErrorConstants.ErrorMessages
-                        .RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED.getCode());
-            } else {
-                Assert.fail("Unexpected exception.", e);
-            }
-        } catch (IdentityProviderManagementException e) {
-            Assert.fail("Error while updating identity provider.", e);
+            Assert.assertEquals(e.getErrorCode(), expectedExceptionCode);
         }
     }
 
-    // TODO: Implement test for uncovered scenarios with a data provider.
     @Test
     public void testProcessAuthenticationResponse() throws UserStoreException {
 
-        initAuthenticationData();
+        initAuthenticatorProperties();
+        initAuthenticationContext();
         HttpServletRequest httpServletRequestMock = mock(HttpServletRequest.class);
         HttpServletResponse httpServletResponseMock = mock(CommonAuthResponseWrapper.class);
 
@@ -453,9 +488,51 @@ public class AppleAuthenticatorTest {
         Assert.assertEquals(authorizationServerEndpoint, AppleAuthenticatorConstants.AUTHORIZATION_SERVER_ENDPOINT);
     }
 
-    private void initAuthenticationData() {
+    @Test
+    public void testGetConfigurationProperties() {
 
-        authenticatorConfig = new AuthenticatorConfig();
+        List<Property> configurationProperties = appleAuthenticator.getConfigurationProperties();
+        Assert.assertEquals(configurationProperties.size(), 11);
+        configurationProperties.forEach(property -> {
+            Assert.assertNotNull(property.getName());
+            Assert.assertNotNull(property.getDisplayName());
+            Assert.assertNotNull(property.getDescription());
+
+            if (property.getName().equals(OIDCAuthenticatorConstants.CLIENT_ID) ||
+                    property.getName().equals(AppleAuthenticatorConstants.TEAM_ID) ||
+                    property.getName().equals(AppleAuthenticatorConstants.KEY_ID) ||
+                    property.getName().equals(AppleAuthenticatorConstants.PRIVATE_KEY)) {
+                Assert.assertTrue(property.isRequired());
+            } else if (property.getName().equals(AppleAuthenticatorConstants.CLIENT_SECRET_VALIDITY_PERIOD)) {
+                Assert.assertEquals(property.getValue(), "15777000");
+            } else if (property.getName().equals(IdentityApplicationConstants.Authenticator.OIDC.SCOPES)) {
+                Assert.assertEquals(property.getValue(), "name email");
+            }
+        });
+    }
+
+    private void initAuthenticatorProperties() {
+
+        testAuthenticatorProperties = new HashMap<>();
+        testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, "testClientId");
+        testAuthenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_SECRET, "testClientSecret");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.CLIENT_SECRET_VALIDITY_PERIOD, "7200");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "testTeamId");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.KEY_ID, "testKeyId");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.PRIVATE_KEY, "-----BEGIN PRIVATE KEY-----\n" +
+                "MIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgzFs/tGqHIchtAQyxZNNo\n" +
+                "Ml/8lB/FhBlUvIdAfLBF5/2hRANCAATV2pzqzrpi6PvE0u08cSEKtwv8jqTdEx1S\n" +
+                "rlf5IBbG+Y4Roo1zQ4s1ztL4j9kQmea6+TvYsRXDn2599Ea5dki/\n" +
+                "-----END PRIVATE KEY-----\n");
+        testAuthenticatorProperties.put(IdentityApplicationConstants.OAuth2.CALLBACK_URL,
+                "https://localhost:9443/commonauth");
+        testAuthenticatorProperties.put(IdentityApplicationConstants.Authenticator.OIDC.SCOPES, "name email");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.ADDITIONAL_QUERY_PARAMETERS, "");
+        testAuthenticatorProperties.put(AppleAuthenticatorConstants.REGENERATE_CLIENT_SECRET, "false");
+    }
+
+    private void initAuthenticationContext() {
+
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setResourceId(TEST_IDP_RESOURCE_ID);
         identityProvider.setIdentityProviderName("AppleIDP");

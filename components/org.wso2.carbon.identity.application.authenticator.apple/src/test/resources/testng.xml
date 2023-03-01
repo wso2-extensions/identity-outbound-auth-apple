@@ -22,6 +22,7 @@
     <test name="apple-authenticator-all" preserve-order="true" parallel="false">
         <classes>
             <class name="org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorTest" />
+            <class name="org.wso2.carbon.identity.application.authenticator.apple.util.AppleUtilTest" />
         </classes>
     </test>
 </suite>
