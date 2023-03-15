@@ -327,7 +327,7 @@
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
         <carbon.base.imp.pkg.version.range>[1.0.0, 2.0.0)</carbon.base.imp.pkg.version.range>
         <carbon.identity.framework.version>5.25.42</carbon.identity.framework.version>
-        <identity.framework.package.import.version.range>[5.14.0, 6.0.0)</identity.framework.package.import.version.range>
+        <identity.framework.package.import.version.range>[5.14.0, 7.0.0)</identity.framework.package.import.version.range>
 
         <!-- other wso2 dependencies -->
         <identity.outbound.auth.oidc.version>5.11.2</identity.outbound.auth.oidc.version>
