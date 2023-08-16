@@ -34,9 +34,11 @@ import org.owasp.encoder.Encode;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.apple.internal.AppleAuthenticatorDataHolder;
 import org.wso2.carbon.identity.application.authenticator.apple.util.AppleUtil;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
@@ -49,6 +51,7 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -58,6 +61,7 @@ import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.utils.DiagnosticLog;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -72,13 +76,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.VALIDATE_OUTBOUND_AUTH_REQUEST;
 import static org.wso2.carbon.identity.base.IdentityConstants.FEDERATED_IDP_SESSION_ID;
 
 /**
@@ -107,9 +115,31 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     protected void initiateAuthenticationRequest(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
+        if (LoggerUtils.isDiagnosticLogsEnabled()) {
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    getComponentId(), VALIDATE_OUTBOUND_AUTH_REQUEST);
+            diagnosticLogBuilder.resultMessage("Initiate outbound Apple Id authentication request.")
+                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                    .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                    .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                    .inputParams(getApplicationDetails(context));
+            addExternalIDPNameIntoDiagnosticLog(context, diagnosticLogBuilder);
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+        }
         try {
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = null;
             if (MapUtils.isNotEmpty(authenticatorProperties)) {
+                if (LoggerUtils.isDiagnosticLogsEnabled()) {
+                    diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(getComponentId(),
+                            VALIDATE_OUTBOUND_AUTH_REQUEST);
+                    diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                            .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                            .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                            .inputParam("authenticator properties", authenticatorProperties.keySet())
+                            .inputParams(getApplicationDetails(context));
+                    addExternalIDPNameIntoDiagnosticLog(context, diagnosticLogBuilder);
+                }
                 evaluateClientSecret(context, authenticatorProperties);
 
                 String clientId = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID);
@@ -145,7 +175,9 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
                                 .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
                                 .setState(state);
-
+                if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
+                    diagnosticLogBuilder.inputParam("scopes", scope);
+                }
                 if (StringUtils.isBlank(queryString) ||
                         !queryString.toLowerCase(Locale.getDefault()).contains("scope=")) {
                     requestBuilder.setScope(scope);
@@ -169,6 +201,10 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                     }
                 }
                 response.sendRedirect(response.encodeRedirectURL(loginPage.replace("\r\n", "")));
+                if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
+                    diagnosticLogBuilder.resultMessage("Redirected to the Apple Id login page.");
+                    LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+                }
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug(OIDCErrorConstants.ErrorMessages.RETRIEVING_AUTHENTICATOR_PROPERTIES_FAILED
@@ -200,6 +236,17 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
                                                  AuthenticationContext context) throws AuthenticationFailedException {
 
+        if (LoggerUtils.isDiagnosticLogsEnabled()) {
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    getComponentId(), PROCESS_AUTHENTICATION_RESPONSE);
+            diagnosticLogBuilder.resultMessage("Processing outbound Apple Id authentication response.")
+                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                    .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                    .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                    .inputParams(getApplicationDetails(context));
+            addExternalIDPNameIntoDiagnosticLog(context, diagnosticLogBuilder);
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+        }
         OAuthClientResponse oAuthResponse = requestAccessToken(request, context);
         mapAccessToken(request, context, oAuthResponse);
         String idToken = mapIdToken(context, request, oAuthResponse);
@@ -222,6 +269,15 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         Map<ClaimMapping, String> claimsMap = new HashMap<>();
         Map<String, Object> jwtAttributeMap = new HashMap<>();
 
+        DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = null;
+        if (LoggerUtils.isDiagnosticLogsEnabled()) {
+            diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    getComponentId(), PROCESS_AUTHENTICATION_RESPONSE);
+            diagnosticLogBuilder.inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                    .inputParams(getApplicationDetails(context))
+                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION);
+            addExternalIDPNameIntoDiagnosticLog(context, diagnosticLogBuilder);
+        }
         /*
           Apple returns user information in the response for the very first authorize call. Requires to extract
           those attributes and add to attribute map.
@@ -304,6 +360,13 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         claimsMap.putAll(getSubjectAttributes(oAuthResponse, authenticatorProperties));
         authenticatedUser.setUserAttributes(claimsMap);
         context.setSubject(authenticatedUser);
+        if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
+            diagnosticLogBuilder.resultMessage("Outbound Apple ID authentication response processed successfully.")
+                    .resultStatus(DiagnosticLog.ResultStatus.SUCCESS);
+            diagnosticLogBuilder.inputParam("user attributes (local claim : remote claim)",
+                    getUserAttributeClaimMappingList(authenticatedUser));
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+        }
     }
 
     /**
@@ -565,6 +628,12 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                                                              Map<String, String> authenticatorProperties) {
 
         return new HashMap<>();
+    }
+
+    @Override
+    protected String getComponentId() {
+
+        return AppleAuthenticatorConstants.LogConstants.OUTBOUND_AUTH_APPLE_SERVICE;
     }
 
     /**
@@ -943,5 +1012,40 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         }
 
         return attributeSeparator;
+    }
+
+    /**
+     * Get application details from the authentication context.
+     * @param context Authentication context.
+     * @return Map of application details.
+     */
+    private Map<String, String> getApplicationDetails(AuthenticationContext context) {
+
+        Map<String, String> applicationDetailsMap = new HashMap<>();
+        FrameworkUtils.getApplicationResourceId(context).ifPresent(applicationId ->
+                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_ID, applicationId));
+        FrameworkUtils.getApplicationName(context).ifPresent(applicationName ->
+                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_NAME,
+                        applicationName));
+        return applicationDetailsMap;
+    }
+
+    private static List<String> getUserAttributeClaimMappingList(AuthenticatedUser authenticatedUser) {
+
+        return authenticatedUser.getUserAttributes().keySet().stream()
+                .map(claimMapping -> {
+                    String localClaim = claimMapping.getLocalClaim().getClaimUri();
+                    String remoteClaim = claimMapping.getRemoteClaim().getClaimUri();
+                    return localClaim + " : " + remoteClaim;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void addExternalIDPNameIntoDiagnosticLog(AuthenticationContext context,
+                                                     DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder) {
+
+        Optional.ofNullable(context.getExternalIdP())
+                .map(ExternalIdPConfig::getIdPName)
+                .ifPresent(idpName -> diagnosticLogBuilder.inputParam(LogConstants.InputKeys.IDP, idpName));
     }
 }
