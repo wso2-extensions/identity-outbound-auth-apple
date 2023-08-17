@@ -45,6 +45,7 @@ import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorC
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
@@ -96,6 +97,7 @@ public class AppleAuthenticatorTest {
     private FileBasedConfigurationBuilder fileBasedConfigurationBuilderMock;
     private MockedStatic<FileBasedConfigurationBuilder> fileBasedConfigurationBuilder;
     private MockedStatic<AppleAuthenticatorDataHolder> appleAuthenticatorDataHolder;
+    private MockedStatic<LoggerUtils> loggerUtilsMock;
 
     private static final String TEST_EMAIL = "user@test.com";
     private static final String TEST_TENANT = "testtenant";
@@ -132,6 +134,9 @@ public class AppleAuthenticatorTest {
         appleAuthenticatorDataHolder.when(AppleAuthenticatorDataHolder::getInstance).thenReturn(
                 appleAuthenticatorDataHolderMock);
         when(appleAuthenticatorDataHolderMock.getRealmService()).thenReturn(realmServiceMock);
+
+        loggerUtilsMock = mockStatic(LoggerUtils.class);
+        loggerUtilsMock.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(true);
     }
 
     @AfterClass

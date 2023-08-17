@@ -48,4 +48,21 @@ public class AppleAuthenticatorConstants {
     public static final String APPLE_TOKEN_ENDPOINT = "AppleTokenEndpoint";
     public static final String APPLE_USER_INFO_KEY = "user";
     public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
+
+    /**
+     * Constants related to log management.
+     */
+    public static class LogConstants {
+
+        public static final String OUTBOUND_AUTH_APPLE_SERVICE = "outbound-auth-apple";
+
+        /**
+         * Define action IDs for diagnostic logs.
+         */
+        public static class ActionIDs {
+
+            public static final String PROCESS_AUTHENTICATION_RESPONSE = "process-outbound-auth-oidc-response";
+            public static final String VALIDATE_OUTBOUND_AUTH_REQUEST = "initiate-outbound-auth-oidc-request";
+        }
+    }
 }

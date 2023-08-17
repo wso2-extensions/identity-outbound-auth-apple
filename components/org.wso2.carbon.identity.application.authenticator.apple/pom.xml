@@ -170,6 +170,7 @@
                             org.wso2.carbon.user.core.tenant; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.api; version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.base; version="${carbon.base.imp.pkg.version.range}",
+                            org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
 
                             org.apache.commons.lang; version="${org.apache.commons.lang.version.range}",
                             org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
@@ -181,6 +182,8 @@
                             org.wso2.carbon.identity.application.authentication.framework.context;
                             version="${identity.framework.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.exception;
+                            version="${identity.framework.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util;
                             version="${identity.framework.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.config.model;
                             version="${identity.framework.package.import.version.range}",
