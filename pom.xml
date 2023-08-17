@@ -28,12 +28,12 @@
         <url>https://github.com/wso2-extensions/identity-outbound-auth-apple.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-apple.git</developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-apple.git</connection>
-        <tag>HEAD</tag>
+        <tag>v1.0.3</tag>
     </scm>
 
     <groupId>org.wso2.carbon.identity.outbound.auth.apple</groupId>
     <artifactId>identity-outbound-auth-apple</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Apple Authenticator Feature Aggregator Module</name>
