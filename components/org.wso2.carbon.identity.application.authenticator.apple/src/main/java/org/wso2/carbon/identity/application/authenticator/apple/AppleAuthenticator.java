@@ -78,6 +78,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -85,8 +86,13 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.AUTHENTICATOR_APPLE;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.IS_API_BASED;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.VALIDATE_OUTBOUND_AUTH_REQUEST;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.REDIRECT_URL_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.SCOPE_PARAM_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.STATE_PARAM_SUFFIX;
 import static org.wso2.carbon.identity.base.IdentityConstants.FEDERATED_IDP_SESSION_ID;
 
 /**
@@ -145,8 +151,13 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 String clientId = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID);
                 String authorizationEP = getAuthorizationServerEndpoint(authenticatorProperties);
                 String callbackUrl = getCallbackUrl(authenticatorProperties);
-                String state = getStateParameter(context, authenticatorProperties);
+                if (Boolean.parseBoolean((String) context.getProperty(IS_API_BASED))) {
+                    callbackUrl = resolveCallBackURLForAPIBasedAuthFlow(context);
+                }
+                String state = getStateParameter(request, context, authenticatorProperties);
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + STATE_PARAM_SUFFIX, state);
                 String scopes = getScope(authenticatorProperties);
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + SCOPE_PARAM_SUFFIX, scopes);
                 String queryString = getQueryString(authenticatorProperties);
 
                 // If scopes are present, Apple requires sending response_mode as form_post.
@@ -200,6 +211,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         loginPage = loginPage + queryString;
                     }
                 }
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + REDIRECT_URL_SUFFIX, loginPage);
                 response.sendRedirect(response.encodeRedirectURL(loginPage.replace("\r\n", "")));
                 if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
                     diagnosticLogBuilder.resultMessage("Redirected to the Apple Id login page.");
@@ -637,6 +649,28 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     }
 
     /**
+     * Get the i18n key defined to represent the authenticator name.
+     *
+     * @return the 118n key.
+     */
+    @Override
+    public String getI18nKey() {
+
+        return AUTHENTICATOR_APPLE;
+    }
+
+    /**
+     * This method is responsible for validating whether the authenticator is supported for API Based Authentication.
+     *
+     * @return true if the authenticator is supported for API Based Authentication.
+     */
+    @Override
+    public boolean isAPIBasedAuthenticationSupported() {
+
+        return true;
+    }
+
+    /**
      * Evaluates if the client secret should be generated and if required, generate and store the secret.
      *
      * @param context                   Authentication context.
@@ -811,13 +845,20 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     /**
      * Get state parameter.
      *
+     * @param request                   Authentication request.
      * @param context                   Authentication context.
      * @param authenticatorProperties   Authenticator properties.
      * @return State.
      */
-    private String getStateParameter(AuthenticationContext context, Map<String, String> authenticatorProperties) {
+    private String getStateParameter(HttpServletRequest request, AuthenticationContext context,
+                                     Map<String, String> authenticatorProperties) {
 
-        String state = context.getContextIdentifier() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        String state;
+        if (FrameworkUtils.isAPIBasedAuthenticationFlow(request)) {
+            state = UUID.randomUUID() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        } else {
+            state = context.getContextIdentifier() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        }
         return getState(state, authenticatorProperties);
     }
 
