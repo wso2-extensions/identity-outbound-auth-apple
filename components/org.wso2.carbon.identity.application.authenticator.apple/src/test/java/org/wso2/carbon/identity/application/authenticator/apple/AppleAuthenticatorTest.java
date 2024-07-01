@@ -247,7 +247,8 @@ public class AppleAuthenticatorTest {
         }
     }
 
-    @Test(dataProvider = "initiateAuthenticationRequestDataProvider")
+    @Test(dataProvider = "initiateAuthenticationRequestDataProvider",
+            dependsOnMethods = {"testInitiateAuthenticationRequest"})
     public void testInitiateAuthenticationRequestForAPIBased(String secretGenerateCondition)
             throws AuthenticationFailedException, IOException, IdentityProviderManagementException {
 
