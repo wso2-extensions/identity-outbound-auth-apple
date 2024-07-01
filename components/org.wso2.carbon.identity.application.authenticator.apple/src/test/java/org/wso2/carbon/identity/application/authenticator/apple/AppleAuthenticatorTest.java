@@ -243,7 +243,7 @@ public class AppleAuthenticatorTest {
             String redirectUrlPropertyKey = AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + REDIRECT_URL_SUFFIX;
             Assert.assertNotNull(authenticationContext.getProperty(redirectUrlPropertyKey));
             // For API based auth flow, the redirect URL should not be equal to commonauth endpoint.
-            Assert.assertTrue(redirectUrl.contains("https://localhost:9443/commonauth"));
+            Assert.assertFalse(redirectUrl.contains("https://localhost:9443/commonauth"));
         }
     }
 
