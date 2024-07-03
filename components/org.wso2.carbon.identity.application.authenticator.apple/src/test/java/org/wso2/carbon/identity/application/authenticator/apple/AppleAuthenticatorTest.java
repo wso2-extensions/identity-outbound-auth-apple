@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.model.CommonAuthResponseWrapper;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authenticator.apple.internal.AppleAuthenticatorDataHolder;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.model.OIDCStateInfo;
@@ -235,7 +236,7 @@ public class AppleAuthenticatorTest {
 
         if (isAPIBased) {
             Assert.assertTrue(Boolean.parseBoolean(
-                    (String) authenticationContext.getProperty(AppleAuthenticatorConstants.IS_API_BASED)));
+                    (String) authenticationContext.getProperty(FrameworkConstants.IS_API_BASED)));
             Assert.assertNotNull(authenticationContext.getProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME
                     + STATE_PARAM_SUFFIX));
             Assert.assertNotNull(authenticationContext.getProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME
@@ -611,7 +612,7 @@ public class AppleAuthenticatorTest {
         authenticationContext.setContextIdentifier(CONTEXT_IDENTIFIER);
 
         if (isAPIBased) {
-            authenticationContext.setProperty(AppleAuthenticatorConstants.IS_API_BASED, "true");
+            authenticationContext.setProperty(FrameworkConstants.IS_API_BASED, "true");
         }
     }
 }

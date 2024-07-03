@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.apple.internal.AppleAuthenticatorDataHolder;
 import org.wso2.carbon.identity.application.authenticator.apple.util.AppleUtil;
@@ -87,7 +88,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.AUTHENTICATOR_APPLE;
-import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.IS_API_BASED;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.VALIDATE_OUTBOUND_AUTH_REQUEST;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.REDIRECT_URL_SUFFIX;
@@ -150,10 +150,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
 
                 String clientId = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID);
                 String authorizationEP = getAuthorizationServerEndpoint(authenticatorProperties);
-                String callbackUrl = getCallbackUrl(authenticatorProperties);
-                if (Boolean.parseBoolean((String) context.getProperty(IS_API_BASED))) {
-                    callbackUrl = resolveCallBackURLForAPIBasedAuthFlow(context);
-                }
+                String callbackUrl = getCallBackURL(context, authenticatorProperties);
                 String state = getStateParameter(request, context, authenticatorProperties);
                 context.setProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + STATE_PARAM_SUFFIX, state);
                 String scopes = getScope(authenticatorProperties);
@@ -668,6 +665,34 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     public boolean isAPIBasedAuthenticationSupported() {
 
         return true;
+    }
+
+    /**
+     * This method is responsible to return the scopes as space separated string.
+     *
+     * @param authenticatorProperties   Authenticator properties.
+     * @return Scopes string
+     */
+    @Override
+    protected String getScope(Map<String, String> authenticatorProperties) {
+
+        String scopes = authenticatorProperties.get(IdentityApplicationConstants.Authenticator.OIDC.SCOPES);
+        return scopes.replace(",", " ").replace("+", " ");
+    }
+
+    /**
+     * This method is responsible for resolving the callback URL for either API based authentication flow or the
+     * usual flow.
+     *
+     * @param context Authentication context.
+     * @return Callback URL.
+     */
+    private String getCallBackURL(AuthenticationContext context, Map<String, String> authenticatorProperties) {
+
+        if (Boolean.parseBoolean((String) context.getProperty(FrameworkConstants.IS_API_BASED))) {
+            return resolveCallBackURLForAPIBasedAuthFlow(context);
+        }
+        return getCallbackUrl(authenticatorProperties);
     }
 
     /**

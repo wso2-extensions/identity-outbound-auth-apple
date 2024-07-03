@@ -49,7 +49,6 @@ public class AppleAuthenticatorConstants {
     public static final String APPLE_USER_INFO_KEY = "user";
     public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
 
-    public static final String IS_API_BASED = "IS_API_BASED";
     public static final String AUTHENTICATOR_APPLE = "authenticator.apple";
 
     /**
