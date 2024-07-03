@@ -152,9 +152,9 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 String authorizationEP = getAuthorizationServerEndpoint(authenticatorProperties);
                 String callbackUrl = getCallBackURL(context, authenticatorProperties);
                 String state = getStateParameter(request, context, authenticatorProperties);
-                context.setProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + STATE_PARAM_SUFFIX, state);
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + STATE_PARAM_SUFFIX, state);
                 String scopes = getScope(authenticatorProperties);
-                context.setProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + SCOPE_PARAM_SUFFIX, scopes);
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + SCOPE_PARAM_SUFFIX, scopes);
                 String queryString = getQueryString(authenticatorProperties);
 
                 // If scopes are present, Apple requires sending response_mode as form_post.
@@ -208,7 +208,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         loginPage = loginPage + queryString;
                     }
                 }
-                context.setProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + REDIRECT_URL_SUFFIX, loginPage);
+                context.setProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + REDIRECT_URL_SUFFIX, loginPage);
                 response.sendRedirect(response.encodeRedirectURL(loginPage.replace("\r\n", "")));
                 if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
                     diagnosticLogBuilder.resultMessage("Redirected to the Apple Id login page.");

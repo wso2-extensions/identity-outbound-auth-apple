@@ -237,11 +237,11 @@ public class AppleAuthenticatorTest {
         if (isAPIBased) {
             Assert.assertTrue(Boolean.parseBoolean(
                     (String) authenticationContext.getProperty(FrameworkConstants.IS_API_BASED)));
-            Assert.assertNotNull(authenticationContext.getProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME
+            Assert.assertNotNull(authenticationContext.getProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME
                     + STATE_PARAM_SUFFIX));
-            Assert.assertNotNull(authenticationContext.getProperty(AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME
+            Assert.assertNotNull(authenticationContext.getProperty(OIDCAuthenticatorConstants.AUTHENTICATOR_NAME
                     + SCOPE_PARAM_SUFFIX));
-            String redirectUrlPropertyKey = AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME + REDIRECT_URL_SUFFIX;
+            String redirectUrlPropertyKey = OIDCAuthenticatorConstants.AUTHENTICATOR_NAME + REDIRECT_URL_SUFFIX;
             Assert.assertNotNull(authenticationContext.getProperty(redirectUrlPropertyKey));
             // For API based auth flow, the redirect URL should not be equal to commonauth endpoint.
             Assert.assertFalse(redirectUrl.contains("https://localhost:9443/commonauth"));
