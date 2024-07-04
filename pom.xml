@@ -330,7 +330,7 @@
         <identity.framework.package.import.version.range>[5.25.260, 8.0.0)</identity.framework.package.import.version.range>
 
         <!-- other wso2 dependencies -->
-        <identity.outbound.auth.oidc.version>5.12.10</identity.outbound.auth.oidc.version>
+        <identity.outbound.auth.oidc.version>5.12.11</identity.outbound.auth.oidc.version>
         <carbon.identity.outbound.oidc.package.import.version.range>[5.11.18, 6.0.0)</carbon.identity.outbound.oidc.package.import.version.range>
         <carbon.identity.oauth.version>6.11.97</carbon.identity.oauth.version>
         <carbon.identity.oauth.package.import.version.range>[6.2.0, 8.0.0)</carbon.identity.oauth.package.import.version.range>
