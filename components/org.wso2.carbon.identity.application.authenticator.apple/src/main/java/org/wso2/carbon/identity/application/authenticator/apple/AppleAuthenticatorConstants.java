@@ -51,6 +51,10 @@ public class AppleAuthenticatorConstants {
 
     public static final String AUTHENTICATOR_APPLE = "authenticator.apple";
 
+    public static final String COMMA_SEPARATOR = ",";
+    public static final String PLUS_SEPARATOR = "+";
+    public static final String SPACE_SEPARATOR = " ";
+
     /**
      * Constants related to log management.
      */

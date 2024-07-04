@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.apple.internal.AppleAuthenticatorDataHolder;
 import org.wso2.carbon.identity.application.authenticator.apple.util.AppleUtil;
@@ -87,8 +88,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.AUTHENTICATOR_APPLE;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.COMMA_SEPARATOR;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.VALIDATE_OUTBOUND_AUTH_REQUEST;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.PLUS_SEPARATOR;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.SPACE_SEPARATOR;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.Claim.NONCE;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OIDC_FEDERATION_NONCE;
 import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.REDIRECT_URL_SUFFIX;
@@ -697,7 +701,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
 
         String scopes = authenticatorProperties.get(IdentityApplicationConstants.Authenticator.OIDC.SCOPES);
         if (StringUtils.isNotBlank(scopes)) {
-            return scopes.replace(",", " ").replace("+", " ");
+            return scopes.replace(COMMA_SEPARATOR, SPACE_SEPARATOR).replace(PLUS_SEPARATOR, SPACE_SEPARATOR);
         }
         return scopes;
     }
