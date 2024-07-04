@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.model.CommonAuthResponseWrapper;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authenticator.apple.internal.AppleAuthenticatorDataHolder;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.model.OIDCStateInfo;
@@ -77,6 +78,9 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.REDIRECT_URL_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.SCOPE_PARAM_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.STATE_PARAM_SUFFIX;
 
 /**
  * Unit tests for the Apple authenticator class.
@@ -87,6 +91,7 @@ public class AppleAuthenticatorTest {
     private static Map<String, String> testAuthenticatorProperties;
     private static AuthenticatorConfig authenticatorConfig;
     private static AuthenticationContext authenticationContext;
+    private static boolean isAPIBased;
 
     private AutoCloseable autoCloseable;
     @Mock
@@ -228,6 +233,28 @@ public class AppleAuthenticatorTest {
         Assert.assertTrue(redirectUrl.contains("client_id=testClientId"));
         Assert.assertTrue(redirectUrl.contains("scope=name%20email"));
         Assert.assertTrue(redirectUrl.contains("response_mode=form_post"));
+
+        if (isAPIBased) {
+            Assert.assertTrue(Boolean.parseBoolean(
+                    (String) authenticationContext.getProperty(FrameworkConstants.IS_API_BASED)));
+            Assert.assertNotNull(authenticationContext.getProperty(appleAuthenticator.getName()
+                    + STATE_PARAM_SUFFIX));
+            Assert.assertNotNull(authenticationContext.getProperty(appleAuthenticator.getName()
+                    + SCOPE_PARAM_SUFFIX));
+            String redirectUrlPropertyKey = appleAuthenticator.getName() + REDIRECT_URL_SUFFIX;
+            Assert.assertNotNull(authenticationContext.getProperty(redirectUrlPropertyKey));
+            // For API based auth flow, the redirect URL should not be equal to commonauth endpoint.
+            Assert.assertFalse(redirectUrl.contains("https://localhost:9443/commonauth"));
+        }
+    }
+
+    @Test(dataProvider = "initiateAuthenticationRequestDataProvider",
+            dependsOnMethods = {"testInitiateAuthenticationRequest"})
+    public void testInitiateAuthenticationRequestForAPIBased(String secretGenerateCondition)
+            throws AuthenticationFailedException, IOException, IdentityProviderManagementException {
+
+        isAPIBased = true;
+        testInitiateAuthenticationRequest(secretGenerateCondition);
     }
 
     @DataProvider(name = "initiateAuthenticationRequestExceptionDataProvider")
@@ -522,6 +549,20 @@ public class AppleAuthenticatorTest {
         });
     }
 
+    @Test
+    public void testGetI18nKey() {
+
+        String facebookI18nKey = appleAuthenticator.getI18nKey();
+        Assert.assertEquals(facebookI18nKey, AppleAuthenticatorConstants.AUTHENTICATOR_APPLE);
+    }
+
+    @Test
+    public void testIsAPIBasedAuthenticationSupported() {
+
+        boolean isAPIBasedAuthenticationSupported = appleAuthenticator.isAPIBasedAuthenticationSupported();
+        Assert.assertTrue(isAPIBasedAuthenticationSupported);
+    }
+
     private void initAuthenticatorProperties() {
 
         testAuthenticatorProperties = new HashMap<>();
@@ -569,5 +610,9 @@ public class AppleAuthenticatorTest {
         authenticationContext.setTenantDomain(TEST_TENANT);
         authenticationContext.setExternalIdP(externalIdPConfig);
         authenticationContext.setContextIdentifier(CONTEXT_IDENTIFIER);
+
+        if (isAPIBased) {
+            authenticationContext.setProperty(FrameworkConstants.IS_API_BASED, "true");
+        }
     }
 }

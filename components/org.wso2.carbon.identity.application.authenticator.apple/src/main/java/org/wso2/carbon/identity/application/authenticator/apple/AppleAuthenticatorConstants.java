@@ -49,6 +49,12 @@ public class AppleAuthenticatorConstants {
     public static final String APPLE_USER_INFO_KEY = "user";
     public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
 
+    public static final String AUTHENTICATOR_APPLE = "authenticator.apple";
+
+    public static final String COMMA_SEPARATOR = ",";
+    public static final String PLUS_SEPARATOR = "+";
+    public static final String SPACE_SEPARATOR = " ";
+
     /**
      * Constants related to log management.
      */

@@ -78,6 +78,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -85,8 +86,17 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.AUTHENTICATOR_APPLE;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.COMMA_SEPARATOR;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.LogConstants.ActionIDs.VALIDATE_OUTBOUND_AUTH_REQUEST;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.PLUS_SEPARATOR;
+import static org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticatorConstants.SPACE_SEPARATOR;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.Claim.NONCE;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.OIDC_FEDERATION_NONCE;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.REDIRECT_URL_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.SCOPE_PARAM_SUFFIX;
+import static org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants.STATE_PARAM_SUFFIX;
 import static org.wso2.carbon.identity.base.IdentityConstants.FEDERATED_IDP_SESSION_ID;
 
 /**
@@ -144,9 +154,13 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
 
                 String clientId = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_ID);
                 String authorizationEP = getAuthorizationServerEndpoint(authenticatorProperties);
-                String callbackUrl = getCallbackUrl(authenticatorProperties);
-                String state = getStateParameter(context, authenticatorProperties);
+                String callbackUrl = getCallbackUrl(authenticatorProperties, context);
+                String state = getStateParameter(request, context, authenticatorProperties);
+                context.setProperty(getName() + STATE_PARAM_SUFFIX, state);
+                String nonce = UUID.randomUUID().toString();
+                context.setProperty(getName() + OIDC_FEDERATION_NONCE, nonce);
                 String scopes = getScope(authenticatorProperties);
+                context.setProperty(getName() + SCOPE_PARAM_SUFFIX, scopes);
                 String queryString = getQueryString(authenticatorProperties);
 
                 // If scopes are present, Apple requires sending response_mode as form_post.
@@ -174,7 +188,8 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                 OAuthClientRequest.AuthenticationRequestBuilder requestBuilder =
                         OAuthClientRequest.authorizationLocation(authorizationEP).setClientId(clientId)
                                 .setResponseType(OIDCAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
-                                .setState(state);
+                                .setState(state)
+                                .setParameter(NONCE, nonce);
                 if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
                     diagnosticLogBuilder.inputParam("scopes", scope);
                 }
@@ -200,6 +215,7 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                         loginPage = loginPage + queryString;
                     }
                 }
+                context.setProperty(getName() + REDIRECT_URL_SUFFIX, loginPage);
                 response.sendRedirect(response.encodeRedirectURL(loginPage.replace("\r\n", "")));
                 if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
                     diagnosticLogBuilder.resultMessage("Redirected to the Apple Id login page.");
@@ -338,6 +354,21 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
                     log.debug("Retrieved the User Information: " + maskedAttributeMap);
                 } else {
                     log.debug("Retrieved the User Information: " + jwtAttributeMap);
+                }
+            }
+
+            // Nonce validation.
+            String nonceKey = getName() + OIDC_FEDERATION_NONCE;
+            if (StringUtils.isNotBlank((String) context.getProperty(nonceKey))) {
+                String nonce = (String) jwtAttributeMap.get(NONCE);
+                if (nonce == null) {
+                    log.debug("OIDC provider does not support nonce claim in id_token.");
+                }
+                if (nonce != null && !nonce.equals(context.getProperty(nonceKey))) {
+                    setAuthenticatorMessageToContext(OIDCErrorConstants.ErrorMessages.NONCE_MISMATCH, context);
+
+                    throw new AuthenticationFailedException(OIDCErrorConstants.ErrorMessages.NONCE_MISMATCH.getCode(),
+                            OIDCErrorConstants.ErrorMessages.NONCE_MISMATCH.getMessage());
                 }
             }
 
@@ -637,6 +668,44 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     }
 
     /**
+     * Get the i18n key defined to represent the authenticator name.
+     *
+     * @return the 118n key.
+     */
+    @Override
+    public String getI18nKey() {
+
+        return AUTHENTICATOR_APPLE;
+    }
+
+    /**
+     * This method is responsible for validating whether the authenticator is supported for API Based Authentication.
+     *
+     * @return true if the authenticator is supported for API Based Authentication.
+     */
+    @Override
+    public boolean isAPIBasedAuthenticationSupported() {
+
+        return true;
+    }
+
+    /**
+     * This method is responsible to return the scopes as space separated string.
+     *
+     * @param authenticatorProperties   Authenticator properties.
+     * @return Scopes string
+     */
+    @Override
+    protected String getScope(Map<String, String> authenticatorProperties) {
+
+        String scopes = authenticatorProperties.get(IdentityApplicationConstants.Authenticator.OIDC.SCOPES);
+        if (StringUtils.isNotBlank(scopes)) {
+            return scopes.replace(COMMA_SEPARATOR, SPACE_SEPARATOR).replace(PLUS_SEPARATOR, SPACE_SEPARATOR);
+        }
+        return scopes;
+    }
+
+    /**
      * Evaluates if the client secret should be generated and if required, generate and store the secret.
      *
      * @param context                   Authentication context.
@@ -811,13 +880,20 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
     /**
      * Get state parameter.
      *
+     * @param request                   Authentication request.
      * @param context                   Authentication context.
      * @param authenticatorProperties   Authenticator properties.
      * @return State.
      */
-    private String getStateParameter(AuthenticationContext context, Map<String, String> authenticatorProperties) {
+    private String getStateParameter(HttpServletRequest request, AuthenticationContext context,
+                                     Map<String, String> authenticatorProperties) {
 
-        String state = context.getContextIdentifier() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        String state;
+        if (FrameworkUtils.isAPIBasedAuthenticationFlow(request)) {
+            state = UUID.randomUUID() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        } else {
+            state = context.getContextIdentifier() + "," + OIDCAuthenticatorConstants.LOGIN_TYPE;
+        }
         return getState(state, authenticatorProperties);
     }
 
@@ -1012,22 +1088,6 @@ public class AppleAuthenticator extends OpenIDConnectAuthenticator {
         }
 
         return attributeSeparator;
-    }
-
-    /**
-     * Get application details from the authentication context.
-     * @param context Authentication context.
-     * @return Map of application details.
-     */
-    private Map<String, String> getApplicationDetails(AuthenticationContext context) {
-
-        Map<String, String> applicationDetailsMap = new HashMap<>();
-        FrameworkUtils.getApplicationResourceId(context).ifPresent(applicationId ->
-                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_ID, applicationId));
-        FrameworkUtils.getApplicationName(context).ifPresent(applicationName ->
-                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_NAME,
-                        applicationName));
-        return applicationDetailsMap;
     }
 
     private static List<String> getUserAttributeClaimMappingList(AuthenticatedUser authenticatedUser) {
