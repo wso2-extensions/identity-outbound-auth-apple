@@ -29,6 +29,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authenticator.apple.AppleAuthenticator;
+import org.wso2.carbon.identity.application.authenticator.apple.executor.AppleExecutor;
+import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.idp.mgt.IdpManager;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -55,6 +57,7 @@ public class AppleAuthenticatorServiceComponent {
             AppleAuthenticator appleAuthenticator = new AppleAuthenticator();
             context.getBundleContext().registerService(
                     ApplicationAuthenticator.class.getName(), appleAuthenticator, null);
+            context.getBundleContext().registerService(Executor.class.getName(), new AppleExecutor(), null);
             if (log.isDebugEnabled()) {
                 log.debug("Apple authenticator bundle is activated.");
             }
