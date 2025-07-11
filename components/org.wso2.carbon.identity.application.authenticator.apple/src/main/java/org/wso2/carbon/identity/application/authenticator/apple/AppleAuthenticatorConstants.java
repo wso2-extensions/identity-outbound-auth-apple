@@ -44,7 +44,7 @@ public class AppleAuthenticatorConstants {
     public static final long CLIENT_SECRET_VALIDITY_PERIOD_DEFAULT = 15777000;
     public static final String APPLE_DEFAULT_QUERY_PARAMS_FOR_SCOPE = "response_mode=form_post";
     public static final String RESPONSE_MODE_PARAMETER = "response_mode";
-    public static final String RESPONSE_MODE_FORM_POST = "query";
+    public static final String RESPONSE_MODE_FORM_POST = "form_post";
 
     public static final String APPLE_AUTHZ_ENDPOINT = "AppleAuthzEndpoint";
     public static final String APPLE_TOKEN_ENDPOINT = "AppleTokenEndpoint";
