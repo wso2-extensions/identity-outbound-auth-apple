@@ -346,8 +346,8 @@
         <commons-collections.wso2.osgi.version.range>[3.0.0, 4.0.0)</commons-collections.wso2.osgi.version.range>
         <oltu.oauth2.version>1.0.0.wso2v3</oltu.oauth2.version>
         <oltu.oauth2.version.range>[1.0.0, 2.0.0)</oltu.oauth2.version.range>
-        <nimbusds.version>7.3.0.wso2v1</nimbusds.version>
-        <nimbusds.osgi.version.range>[7.3.0, 8.0.0)</nimbusds.osgi.version.range>
+        <nimbusds.version>10.3.0.wso2v1</nimbusds.version>
+        <nimbusds.osgi.version.range>[10.0.0, 11.0.0)</nimbusds.osgi.version.range>
         <json.wso2.version>3.0.0.wso2v1</json.wso2.version>
         <json.wso2.version.range>[3.0.0.wso2v1, 4.0.0)</json.wso2.version.range>
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
