@@ -48,6 +48,12 @@ public class AppleExecutor extends OpenIDConnectExecutor {
     }
 
     @Override
+    public String getAMRValue() {
+
+        return AppleAuthenticatorConstants.APPLE_CONNECTOR_NAME;
+    }
+
+    @Override
     public String getAuthorizationServerEndpoint(Map<String, String> authenticatorProperties) {
 
         String authzEndpoint = authenticatorProperties.get(AppleAuthenticatorConstants.APPLE_AUTHZ_ENDPOINT);
