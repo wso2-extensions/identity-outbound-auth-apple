@@ -92,7 +92,7 @@ public class AppleUtilTest {
         }
 
         // Assert for jwt attributes.
-        byte[] decodedBody = Base64.decodeBase64(clientSecretParts[1].getBytes(StandardCharsets.UTF_8));
+        byte[] decodedBody = java.util.Base64.getUrlDecoder().decode(clientSecretParts[1]);
         Set<Map.Entry<String, Object>> jwtAttributeSet = JSONObjectUtils.parseJSONObject(
                 new String(decodedBody, StandardCharsets.UTF_8)).entrySet();
         for (Map.Entry<String, Object> entry: jwtAttributeSet) {
