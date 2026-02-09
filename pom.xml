@@ -172,7 +172,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-inline</artifactId>
+                <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -210,6 +210,17 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <inherited>true</inherited>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
+                        <source>21</source>
+                        <target>21</target>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>${maven.bundle.plugin.version}</version>
@@ -246,20 +257,20 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>findbugs-maven-plugin</artifactId>
-                    <version>${maven.findbugsplugin.version}</version>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>4.9.8.2</version>
                     <configuration>
-                        <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
                         <effort>Max</effort>
                         <threshold>Low</threshold>
+                        <failOnError>true</failOnError>
+                        <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                         <xmlOutput>true</xmlOutput>
-                        <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                        <xmlOutputDirectory>${project.build.directory}/spotbugs</xmlOutputDirectory>
                     </configuration>
                     <executions>
                         <execution>
-                            <id>analyze-compile</id>
-                            <phase>compile</phase>
+                            <phase>verify</phase>
                             <goals>
                                 <goal>check</goal>
                             </goals>
@@ -343,7 +354,7 @@
         <net.minidev.json.imp.pkg.version.range>[2.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
 
         <!-- maven plugin dependencies -->
-        <maven.scr.plugin.version>1.24.0</maven.scr.plugin.version>
+        <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
         <maven.bundle.plugin.version>5.1.9</maven.bundle.plugin.version>
         <apache.felix.scr.ds.annotations.version>1.2.8</apache.felix.scr.ds.annotations.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
@@ -351,9 +362,9 @@
         <maven.findbugsplugin.version>3.0.5</maven.findbugsplugin.version>
 
         <!-- test dependencies -->
-        <testng.version>6.9.10</testng.version>
-        <mockito.version>4.9.0</mockito.version>
-        <jacoco.version>0.8.4</jacoco.version>
-        <maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
+        <testng.version>7.10.1</testng.version>
+        <mockito.version>5.3.1</mockito.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
     </properties>
 </project>

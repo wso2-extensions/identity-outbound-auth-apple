@@ -41,6 +41,9 @@ public class AppleAuthenticatorDataHolder {
         return instance;
     }
 
+    private AppleAuthenticatorDataHolder() {    
+    }
+
     /**
      * Get Realm service.
      *
