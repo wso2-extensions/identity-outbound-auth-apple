@@ -572,9 +572,9 @@ public class AppleAuthenticatorTest {
         testAuthenticatorProperties.put(AppleAuthenticatorConstants.TEAM_ID, "testTeamId");
         testAuthenticatorProperties.put(AppleAuthenticatorConstants.KEY_ID, "testKeyId");
         testAuthenticatorProperties.put(AppleAuthenticatorConstants.PRIVATE_KEY, "-----BEGIN PRIVATE KEY-----\n" +
-                "MIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgzFs/tGqHIchtAQyxZNNo\n" +
-                "Ml/8lB/FhBlUvIdAfLBF5/2hRANCAATV2pzqzrpi6PvE0u08cSEKtwv8jqTdEx1S\n" +
-                "rlf5IBbG+Y4Roo1zQ4s1ztL4j9kQmea6+TvYsRXDn2599Ea5dki/\n" +
+                "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg3KM9rCHTDP72ujf1\n" +
+                "ZCtfZRuq1nMIak9wzrUzJgKfBL6hRANCAAS3ULxSFCojLnWgrMX0jbOwDb8bZ4+8\n" +
+                "CCjTOs0Itw0QyZJtPCINqDvpUvUWviQpSyQJ6jwu4vFxXyMO8oTaTEY2\n" +
                 "-----END PRIVATE KEY-----\n");
         testAuthenticatorProperties.put(IdentityApplicationConstants.OAuth2.CALLBACK_URL,
                 "https://localhost:9443/commonauth");
